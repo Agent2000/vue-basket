@@ -1,5 +1,5 @@
 <script setup>
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 
 const basket = reactive([
   {
@@ -7,7 +7,7 @@ const basket = reactive([
     name: 'Blue Flower Print Crop Top',
     color: 'Yellow',
     size: 'M',
-    price: '$29.00',
+    price: 29.0,
     quantity: 1,
     imageUrl: '../public/crop-top.png',
   },
@@ -16,7 +16,7 @@ const basket = reactive([
     name: 'Levender Hoodie',
     color: 'Levender',
     size: 'XXL',
-    price: '$119.00',
+    price: 119.0,
     quantity: 1,
     imageUrl: '../public/hoodie.png',
   },
@@ -25,11 +25,43 @@ const basket = reactive([
     name: 'Black Sweatshirt',
     color: 'Black',
     size: 'XXL',
-    price: '$123.00',
+    price: 123.0,
     quantity: 1,
     imageUrl: '../public/sweatshirt.png',
   },
 ])
+
+const increaseItemQuantity = (item) => {
+  item.quantity++
+}
+
+const decreaseItemQuantity = (item) => {
+  item.quantity > 0 ? item.quantity-- : 0
+}
+
+const totalItemPrice = (item) => {
+  return Number(item.price) * item.quantity
+}
+
+const removeItem = (index) => {
+  basket.splice(index, 1)
+}
+
+const isEmptyBasket = computed(() => {
+  return basket.length === 0
+})
+
+const totalPrice = computed(() => {
+  return basket.reduce((sum, { price, quantity }) => sum + price * quantity, 0).toFixed(2)
+})
+
+const totalTax = computed(() => {
+  const _totalPrice = basket
+    .reduce((sum, { price, quantity }) => sum + price * quantity, 0)
+    .toFixed(2)
+  console.log(_totalPrice)
+  return (_totalPrice * 0.1).toFixed(2)
+})
 </script>
 
 <template>
@@ -45,7 +77,7 @@ const basket = reactive([
         </tr>
       </thead>
       <tbody class="basket-table__body">
-        <tr v-for="product in basket" :key="product.id">
+        <tr v-for="(product, index) in basket" :key="product.id">
           <td>
             <div class="basket-item">
               <div class="basket-item__image">
@@ -59,20 +91,20 @@ const basket = reactive([
             </div>
           </td>
           <td>
-            <p class="basket-item__price">{{ product.price }}</p>
+            <p class="basket-item__price">${{ product.price }}</p>
           </td>
           <td>
             <div class="basket-item__quantity">
-              <button class="quantity-button">–</button>
-              <input type="number" value="1" min="1" />
-              <button class="quantity-button">+</button>
+              <button @click="decreaseItemQuantity(product)" class="quantity-button">–</button>
+              <input type="number" :value="`${product.quantity}`" min="1" />
+              <button @click="increaseItemQuantity(product)" class="quantity-button">+</button>
             </div>
           </td>
           <td>
-            <p class="basket-item__price">$29.00</p>
+            <p class="basket-item__price">${{ totalItemPrice(product) }}</p>
           </td>
           <td>
-            <button class="btn btn-delete" aria-label="Удалить">
+            <button @click="removeItem(index)" class="btn btn-delete" aria-label="Удалить">
               <svg
                 class="w-6 h-6 text-gray-800 dark:text-white"
                 aria-hidden="true"
@@ -94,16 +126,18 @@ const basket = reactive([
           </td>
         </tr>
         <tr>
-          <td colspan="5">
+          <td v-if="isEmptyBasket" colspan="5">
             <p class="basket-table__empty">No items</p>
           </td>
         </tr>
 
-        <tr>
+        <tr v-if="!isEmptyBasket">
           <td colspan="5">
             <div class="basket-table__summary">
-              <p class="basket-table__total">Total <b>$271.00</b></p>
-              <p>Tax $27.10</p>
+              <p class="basket-table__total">
+                Total <b>${{ totalPrice }}</b>
+              </p>
+              <p>Tax ${{ totalTax }}</p>
             </div>
           </td>
         </tr>
